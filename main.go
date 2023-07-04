@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -53,6 +54,12 @@ func main() {
 			text = "OK! The server is configured as " + config + "!"
 		}
 		ctx.String(http.StatusOK, text)
+	})
+
+	g.GET("/butterfly", func(ctx *gin.Context) {
+		ok = false
+		fmt.Fprintln(os.Stderr, "ERROR: BUG: Haha! Nobody find... Oh no! You caught me!")
+		ctx.String(http.StatusInternalServerError, "Something goes wrong")
 	})
 
 	g.StaticFile("/secretfile", "/app/secret/secretfile")
