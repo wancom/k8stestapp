@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp
+  labels:
+    app: demoapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demoapp
+  template:
+    metadata:
+      labels:
+        app: demoapp
+    spec:
+      containers:
+      - name: demoapp
+        image: ghcr.io/wancom/k8stestapp:v1.0
+        env:
+          # Environment variables definition
+          - name: PORT
+            value: "8080"
+          # You can use configmaps as environment variables
+          - name: MY_CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: demoappcm
+                key: configenv
+          # You can also use secrets as environment variables
+          - name: MY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: demoappsc
+                key: secretenv
+        volumeMounts:
+        - name: configfile
+          mountPath: "/app/config"
+          readOnly: true
+        - name: secretfile
+          mountPath: "/app/secret"
+          readOnly: true
+        # readinessProbe checks if the container is ready
+        # if not, service will not use the pod for serving
+        readinessProbe:
+          # checks by sending a GET request to :8080/healthz
+          httpGet:
+            path: /healthz
+            port: 8080
+          # waits 10 sec for startup
+          initialDelaySeconds: 10
+          # checks every 5 sec
+          periodSeconds: 5
+          # if 4 consecutive checks fail, the container is considered unhealthy
+          failureThreshold: 4
+        # livenessProbe checks if the container is alive
+        # if not, the container will be restarted
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 12
+      volumes:
+      # You can use the configmap as files
+      - name: configfile
+        configMap:
+          name: demoappcm
+          items:
+          - key: configfile
+            path: configfile
+      # You can also use the secret as files
+      - name: secretfile
+        secret:
+          secretName: demoappsc
+          items:
+          - key: secretfile
+            path: secretfile

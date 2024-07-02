@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demoappcm
+data:
+  configenv: ConfigEnv
+  configfile: |
+    Config File Contents
+    This is a config file.
+    Write your configuration here.

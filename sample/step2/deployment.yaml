@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp
+  labels:
+    app: demoapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demoapp
+  template:
+    metadata:
+      labels:
+        app: demoapp
+    spec:
+      containers:
+      - name: demoapp
+        # Upgrade the image to v2.0
+        image: ghcr.io/wancom/k8stestapp:v2.0
+        env:
+          - name: PORT
+            value: "8080"
+          - name: MY_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: demoappsc
+                key: secretenv
+          - name: MY_CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: demoappcm
+                key: configenv
+        volumeMounts:
+        - name: secretfile
+          mountPath: "/app/secret"
+          readOnly: true
+        - name: configfile
+          mountPath: "/app/config"
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 4
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 12
+      volumes:
+      - name: secretfile
+        secret:
+          secretName: demoappsc
+          items:
+          - key: secretfile
+            path: secretfile
+      - name: configfile
+        configMap:
+          name: demoappcm
+          items:
+          - key: configfile
+            path: configfile
